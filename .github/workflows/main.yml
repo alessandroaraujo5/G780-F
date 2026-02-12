@@ -1,0 +1,42 @@
+name: ROOT SSH
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 horas
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Libera espaço (importante pra kernel/ROM)
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune -a -f
+
+      # Instala ferramentas básicas
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y git curl wget bc bison flex build-essential \
+          clang lld llvm python3 python-is-python3 zip unzip rsync
+
+      # SSH OFICIAL e estável
+      - name: Start SSH session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: false
+
+      # Keep alive (não mata por idle)
+      - name: Keep runner alive
+        run: |
+          echo "Runner alive..."
+          sleep 21600
